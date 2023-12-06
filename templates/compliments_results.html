@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Compliments Results
+{% endblock %}
+
+{% block content %}
+
+<!-- Your HTML code goes here! -->
+{% if compliments %}
+<h2>Compliments:</h2>
+<ul>
+    {% for compliment in compliments %}
+        <li>{{ compliment }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No compliments for you this time. Maybe next time!</p>
+{% endif %}
+
+
+{% endblock %}

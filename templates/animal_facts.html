@@ -16,7 +16,9 @@ Animal Facts
             <!-- TODO: Use a for loop to show one option element for each 
                 animal. -->
             <select name="animal">
-                <option value="koala">koala</option>
+                {% for animal in all_animals %}
+                <option value="{{ animal }}" {% if animal == selected_animal %}selected{% endif %}>{{ animal }}</option>
+            {% endfor %}
             </select>
         </label>
 

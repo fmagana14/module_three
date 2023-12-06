@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 from PIL import Image, ImageFilter
 from pprint import PrettyPrinter
 from dotenv import load_dotenv
@@ -50,16 +50,18 @@ list_of_compliments = [
 @app.route('/compliments')
 def compliments():
     """Shows the user a form to get compliments."""
-    return render_template('compliments_form.html')
+    return render_template('compliments_forms.html')
 
-@app.route('/compliments_results')
+@app.route('/compliments_results', methods = ["POST"])
 def compliments_results():
     """Show the user some compliments."""
-    context = {
-        # TODO: Enter your context variables here.
-    }
+    user_name = request.form.get('user_name')
+    want_compliments = request.form.get('want_compliments') == 'on'
+    num_compliments = int(request.form.get('num_compliments'))
 
-    return render_template('compliments_results.html', **context)
+    selected_compliments = random.sample(compliments, num_compliments)if want_compliments else[]
+    
+    return render_template('compliments_results.html', user_name= user_name, compliments = selected_compliments)
 
 
 ################################################################################
@@ -74,23 +76,25 @@ animal_to_fact = {
     'narwhal': 'Narwhal tusks are really an "inside out" tooth.'
 }
 
-@app.route('/animal_facts')
+@app.route('/animal_facts', methods=['GET'])
 def animal_facts():
     """Show a form to choose an animal and receive facts."""
+    selected_animal = request.args.get('animal')
 
-    # TODO: Collect the form data and save as variables
+    all_animals = list(animal_to_fact.keys())
 
-    context = {
-        # TODO: Enter your context variables here for:
-        # - the list of all animals (get from animal_to_fact)
-        # - the chosen animal fact (may be None if the user hasn't filled out the form yet)
-    }
-    return render_template('animal_facts.html', **context)
+    selected_fact = animal_to_fact.get(selected_animal, 'No fact available for this animal.')
+
+    # TODO: Enter your context variables here for:
+    # - the list of all animals (get from animal_to_fact)
+    # - the chosen animal fact (may be None if the user hasn't filled out the form yet)
+    return render_template('animal_facts.html', selected_animal=selected_animal, all_animals=all_animals, selected_fact=selected_fact)
+
 
 
 ################################################################################
 # IMAGE FILTER ROUTE
-################################################################################
+# ################################################################################
 
 filter_types_dict = {
     'blur': ImageFilter.BLUR,
@@ -108,13 +112,10 @@ def save_image(image, filter_type):
     # apply multiple filters to 1 image, there won't be a name conflict)
     new_file_name = f"{filter_type}-{image.filename}"
     image.filename = new_file_name
-
     # Construct full file path
-    file_path = os.path.join(app.root_path, 'static/images', new_file_name)
-    
+    file_path: os.path.join(app.root_path, 'static/images', new_file_name)
     # Save the image
     image.save(file_path)
-
     return file_path
 
 
@@ -135,15 +136,19 @@ def image_filter():
         # TODO: Get the user's chosen filter type (whichever one they chose in the form) and save
         # as a variable
         # HINT: remember that we're working with a POST route here so which requests function would you use?
-        filter_type = ''
+        filter_type = request.form.get('filler_keys')
         
         # Get the image file submitted by the user
         image = request.files.get('users_image')
 
+        if not image:
+            return redirect(url_for('image_filter'))
+
         # TODO: call `save_image()` on the image & the user's chosen filter type, save the returned
         # value as the new file path
-
+        file_path = save_image(image, filter_type)
         # TODO: Call `apply_filter()` on the file path & filter type
+        apply_filter(file_path, filter_type)
 
         image_url = f'./static/images/{image.filename}'
 
@@ -151,6 +156,9 @@ def image_filter():
             # TODO: Add context variables here for:
             # - The full list of filter types
             # - The image URL
+            'filter_types_dict' : filter_types_dict,
+            'filter_types' : filter_types,
+            'image_url': image_url
         }
 
         return render_template('image_filter.html', **context)
@@ -158,6 +166,9 @@ def image_filter():
     else: # if it's a GET request
         context = {
             # TODO: Add context variable here for the full list of filter types
+            'filter_types_dict' : filter_types_dict,
+            'filter_types': filter_types,
+
         }
         return render_template('image_filter.html', **context)
 
@@ -216,4 +227,4 @@ def gif_search():
 
 if __name__ == '__main__':
     app.config['ENV'] = 'development'
-    app.run(debug=True)
+    app.run(debug=True, port=5002)
