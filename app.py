@@ -47,22 +47,63 @@ list_of_compliments = [
     'zoetic'
 ]
 
+
 @app.route('/compliments')
 def compliments():
     """Shows the user a form to get compliments."""
-    return render_template('compliments_forms.html')
+    return render_template('compliments_form.html')
 
-@app.route('/compliments_results', methods = ["POST"])
+@app.route('/compliments_results')
 def compliments_results():
     """Show the user some compliments."""
-    user_name = request.form.get('user_name')
-    want_compliments = request.form.get('want_compliments') == 'on'
-    num_compliments = int(request.form.get('num_compliments'))
+    users_name = request.args.get("users_name")
+    wants_compliments = request.args.get("wants_compliments")
+    num_compliments = request.args.get("num_compliments")
 
-    selected_compliments = random.sample(compliments, num_compliments)if want_compliments else[]
-    
-    return render_template('compliments_results.html', user_name= user_name, compliments = selected_compliments)
+    if wants_compliments== "yes":
+        results = random.sample(list_of_compliments, int(num_compliments))
 
+    else:
+        results = ""
+
+    context = {
+        # TODO: Enter your context variables here.
+        "users_name" : users_name,
+        "wants_compliments" : wants_compliments,
+        "num_compliments" : num_compliments,
+        "results" : results
+    }
+
+    return render_template('compliments_results.html', **context)
+
+
+# @app.route('/compliments')
+# def compliments():
+#     """Shows the user a form to get compliments."""
+#     return render_template('compliments_forms.html')
+
+# @app.route('/compliments_results')
+# def compliments_results():
+#     """Show the user some compliments."""
+#     user_name = request.form.get('user_name')
+#     want_compliments = request.form.get('want_compliments')
+#     num_compliments = int(request.form.get('num_compliments'))
+
+#     selected_compliments = random.sample(compliments, num_compliments)
+#     if want_compliments == 'yes':
+#         results = random.sample, list_of_compliments
+#     else:
+#         reults = " "
+
+#     context = {
+#         # TODO: Enter your context variables here.
+#         "user_name" : user_name,
+#         "want_compliments" : want_compliments,
+#         "num_compliments" : num_compliments,
+#         "results" : results
+#     }
+
+#     return render_template('compliments_results.html', **context)
 
 ################################################################################
 # ANIMAL FACTS ROUTE
@@ -112,10 +153,13 @@ def save_image(image, filter_type):
     # apply multiple filters to 1 image, there won't be a name conflict)
     new_file_name = f"{filter_type}-{image.filename}"
     image.filename = new_file_name
+
     # Construct full file path
-    file_path: os.path.join(app.root_path, 'static/images', new_file_name)
+    file_path = os.path.join(app.root_path, 'static/images', new_file_name)
+    
     # Save the image
     image.save(file_path)
+
     return file_path
 
 
@@ -136,7 +180,7 @@ def image_filter():
         # TODO: Get the user's chosen filter type (whichever one they chose in the form) and save
         # as a variable
         # HINT: remember that we're working with a POST route here so which requests function would you use?
-        filter_type = request.form.get('filler_keys')
+        filter_type = request.form.get('filter_type')
         
         # Get the image file submitted by the user
         image = request.files.get('users_image')
@@ -146,11 +190,11 @@ def image_filter():
 
         # TODO: call `save_image()` on the image & the user's chosen filter type, save the returned
         # value as the new file path
-        file_path = save_image(image, filter_type)
+        new_file_path = save_image(image, filter_type)
         # TODO: Call `apply_filter()` on the file path & filter type
-        apply_filter(file_path, filter_type)
+        apply_filter(new_file_path, filter_type)
 
-        image_url = f'./static/images/{image.filename}'
+        image_url = f'images/{image.filename}'
 
         context = {
             # TODO: Add context variables here for:
@@ -198,22 +242,28 @@ def gif_search():
     if request.method == 'POST':
         # TODO: Get the search query & number of GIFs requested by the user, store each as a 
         # variable
+        search_query = request.form.get('search_query')
+        num_gifs = request.form.get('num_gifs')
 
         response = requests.get(
             TENOR_URL,
-            {
+            params={
                 # TODO: Add in key-value pairs for:
-                # - 'q': the search query
-                # - 'key': the API key (defined above)
-                # - 'limit': the number of GIFs requested
+                'q' : search_query,
+                'key' : API_KEY,
+                'limit' :num_gifs
             })
+        print(f"API request URL: {response.url}")
+
+        if response.status_code != 200:
+            print(f"Error: {response.status_code}, {response.content}")
 
         gifs = json.loads(response.content).get('results')
 
         context = {
             'gifs': gifs
         }
-
+        print(gifs)
          # Uncomment me to see the result JSON!
         # Look closely at the response! It's a list
         # list of data. The media property contains a 

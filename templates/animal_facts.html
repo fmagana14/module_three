@@ -17,8 +17,8 @@ Animal Facts
                 animal. -->
             <select name="animal">
                 {% for animal in all_animals %}
-                <option value="{{ animal }}" {% if animal == selected_animal %}selected{% endif %}>{{ animal }}</option>
-            {% endfor %}
+                    <option value="{{ animal }}" {% if animal == selected_animal %}selected{% endif %}>{{ animal }}</option>
+                {% endfor %}
             </select>
         </label>
 
@@ -34,7 +34,9 @@ Animal Facts
         Here is your animal fact:
     </p>
     <p>
-        <em>Your animal fact goes here.</em>
+        {% if selected_fact %}
+        <em>{{selected_fact}}.</em>
+        {% endif %}
     </p>
 </section>
 

@@ -6,17 +6,12 @@ Compliments Results
 
 {% block content %}
 
-<!-- Your HTML code goes here! -->
-{% if compliments %}
-<h2>Compliments:</h2>
-<ul>
-    {% for compliment in compliments %}
-        <li>{{ compliment }}</li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>No compliments for you this time. Maybe next time!</p>
-{% endif %}
+<h3>Hey {{users_name}}!</h3>
 
+{% for item in results %}
+    <ul>
+        <li>{{item}}</li>
+    </ul>
+{% endfor %}
 
 {% endblock %}
